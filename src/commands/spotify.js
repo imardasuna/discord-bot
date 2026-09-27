@@ -13,10 +13,10 @@ module.exports = {
     .addSubcommand((s) => s.setName('logout').setDescription('Spotify baglantisini kes'))
     .addSubcommand((s) => s.setName('durum').setDescription('Baglanti durumunu goster'))
     .addSubcommand((s) =>
-      s.setName('now').setDescription('Spotify\'da su an calani ve aktif listeyi goster'),
+      s.setName('now').setDescription("Spotify'da su an calani ve aktif listeyi goster"),
     )
     .addSubcommand((s) =>
-      s.setName('aktif').setDescription('Spotify\'da su an acik olan listeyi Discord\'da cal'),
+      s.setName('aktif').setDescription("Spotify'da su an acik olan listeyi Discord'da cal"),
     )
     .addSubcommand((s) =>
       s.setName('liked').setDescription('Begenilen sarkilardan cal (ilk 30)'),
@@ -160,9 +160,9 @@ async function showNowPlaying(ctx, api) {
     return ctx.reply(`Spotify okunamadi: ${error.message}`);
   }
 
-  if (!playback?.item) {
+  if (!playback || !playback.item) {
     return ctx.reply(
-      'Spotify\'da su an calan bir sey yok. Telefonda veya masaustunde bir parca baslat, sonra tekrar dene.',
+      "Spotify'da su an calan bir sey yok. Telefonda veya masaustunde bir parca baslat, sonra tekrar dene.",
     );
   }
 
@@ -171,28 +171,37 @@ async function showNowPlaying(ctx, api) {
   const context = playback.context;
   let contextLine = 'Baglam yok (tek parca, begenilenler karisik veya radyo olabilir).';
 
-  if (context?.type === 'playlist') {
+  if (context && context.type === 'playlist') {
     const id = idFromUri(context.uri, 'playlist');
     try {
       const { body } = await api.getPlaylist(id);
-      contextLine = `Aktif liste: **${body.name}** (${body.tracks.total} parca)\nCalmak icin: `/spotify aktif``;
+      contextLine =
+        'Aktif liste: **' +
+        body.name +
+        '** (' +
+        body.tracks.total +
+        ' parca)\nCalmak icin: `/spotify aktif`';
     } catch {
-      contextLine = `Aktif liste URI: ${context.uri}\nCalmak icin: `/spotify aktif``;
+      contextLine = 'Aktif liste URI: ' + context.uri + '\nCalmak icin: `/spotify aktif`';
     }
-  } else if (context?.type === 'album') {
-    contextLine = `Aktif album: ${track.album?.name || context.uri}`;
-  } else if (context?.type) {
-    contextLine = `Kaynak: ${context.type}`;
+  } else if (context && context.type === 'album') {
+    contextLine = 'Aktif album: ' + (track.album && track.album.name ? track.album.name : context.uri);
+  } else if (context && context.type) {
+    contextLine = 'Kaynak: ' + context.type;
   }
+
+  const title = playback.is_playing ? "Spotify'da simdi caliyor" : "Spotify'da duraklatildi";
+  const art = track.album && track.album.images && track.album.images[0] ? track.album.images[0].url : null;
+  const url = track.external_urls && track.external_urls.spotify ? track.external_urls.spotify : null;
 
   return ctx.reply({
     embeds: [
       new EmbedBuilder()
         .setColor(config.embedColor)
-        .setTitle(playback.is_playing ? 'Spotify\'da simdi caliyor' : 'Spotify\'da duraklatildi')
-        .setDescription(`**${track.name}**\n${artists}\n\n${contextLine}`)
-        .setThumbnail(track.album?.images?.[0]?.url || null)
-        .setURL(track.external_urls?.spotify || null),
+        .setTitle(title)
+        .setDescription('**' + track.name + '**\n' + artists + '\n\n' + contextLine)
+        .setThumbnail(art)
+        .setURL(url),
     ],
   });
 }
@@ -203,30 +212,32 @@ async function playActiveContext(ctx, api) {
     playback = await getPlayback(api);
   } catch (error) {
     if (String(error).includes('403') || error.statusCode === 403) {
-      return ctx.reply(
-        'Bu izin henuz yok. `/spotify logout` sonra `/spotify login` yap.',
-      );
+      return ctx.reply('Bu izin henuz yok. `/spotify logout` sonra `/spotify login` yap.');
     }
     return ctx.reply(`Spotify okunamadi: ${error.message}`);
   }
 
-  if (!playback?.item && !playback?.context) {
-    return ctx.reply('Spotify\'da acik bir parca/liste yok.');
+  if (!playback || (!playback.item && !playback.context)) {
+    return ctx.reply("Spotify'da acik bir parca/liste yok.");
   }
 
   const context = playback.context;
-  if (context?.type === 'playlist') {
+  if (context && context.type === 'playlist') {
     const id = idFromUri(context.uri, 'playlist');
     const { body } = await api.getPlaylist(id);
     const tracks = await collectPlaylistTracks(api, id);
     return playTracks(ctx, tracks, body.name);
   }
 
-  if (context?.type === 'album') {
+  if (context && context.type === 'album') {
     const id = idFromUri(context.uri, 'album');
     const { body } = await api.getAlbumTracks(id, { limit: 50 });
     const tracks = body.items || [];
-    return playTracks(ctx, tracks, playback.item?.album?.name || 'Album');
+    const albumName =
+      playback.item && playback.item.album && playback.item.album.name
+        ? playback.item.album.name
+        : 'Album';
+    return playTracks(ctx, tracks, albumName);
   }
 
   return playTracks(ctx, [playback.item], playback.item.name);
@@ -249,7 +260,7 @@ async function playTracks(ctx, tracks, title) {
   if (!tracks.length) return ctx.reply('Parca bulunamadi.');
   const queries = tracks.map(trackQuery);
   if (ctx.deferReply) await ctx.deferReply();
-  else await ctx.reply(`**${title}** kuyruga ekleniyor (${queries.length} parca)...`);
+  else await ctx.reply('**' + title + '** kuyruga ekleniyor (' + queries.length + ' parca)...');
 
   const first = await playQuery(ctx, queries[0]);
   if (!first.ok) {
@@ -269,6 +280,6 @@ async function playTracks(ctx, tracks, title) {
     }
   }
 
-  const done = `**${title}** — ${queries.length} parca kuyrukta.`;
+  const done = '**' + title + '** — ' + queries.length + ' parca kuyrukta.';
   if (ctx.editReply) return ctx.editReply(done);
 }
