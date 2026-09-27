@@ -40,22 +40,26 @@ client.distube = setupDistube(client);
 startSpotifyServer();
 
 client.once(Events.ClientReady, (ready) => {
-  console.log(`[bot] ${ready.user.tag} olarak giris yapildi`);
-  ready.user.setActivity(`${config.prefix}help | /play`, { type: 2 });
+  console.log('[bot] ' + ready.user.tag + ' olarak giris yapildi');
+  ready.user.setActivity(config.prefix + 'help | /help', { type: 2 });
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
   try {
+    if (interaction.isButton() && interaction.customId.startsWith('help:')) {
+      const help = client.commands.get('help');
+      return help.handleButton(interaction);
+    }
+    if (!interaction.isChatInputCommand()) return;
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
     await command.execute(interaction, []);
   } catch (error) {
     console.error(error);
-    const payload = { content: `Komut hatasi: ${error.message}`, ephemeral: true };
+    const payload = { content: 'Komut hatasi: ' + error.message, ephemeral: true };
     if (interaction.deferred || interaction.replied) {
       await interaction.followUp(payload).catch(() => {});
-    } else {
+    } else if (interaction.reply) {
       await interaction.reply(payload).catch(() => {});
     }
   }
@@ -75,7 +79,7 @@ client.on(Events.MessageCreate, async (message) => {
     await command.execute(message, parts);
   } catch (error) {
     console.error(error);
-    await message.reply(`Komut hatasi: ${error.message}`).catch(() => {});
+    await message.reply('Komut hatasi: ' + error.message).catch(() => {});
   }
 });
 
