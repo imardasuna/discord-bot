@@ -18,10 +18,7 @@ function songEmbed(title, song) {
 }
 
 function setupDistube(client) {
-  const plugins = [
-    new SoundCloudPlugin(),
-    new YtDlpPlugin({ update: true }),
-  ];
+  const plugins = [new SoundCloudPlugin(), new YtDlpPlugin({ update: true })];
 
   if (config.spotify.clientId && config.spotify.clientSecret) {
     plugins.unshift(
@@ -57,15 +54,19 @@ function setupDistube(client) {
             new EmbedBuilder()
               .setColor(config.embedColor)
               .setTitle('Calma listesi eklendi')
-              .setDescription(`[${playlist.name}](${playlist.url || playlist.source}) — ${playlist.songs.length} parca`),
+              .setDescription(
+                `[${playlist.name}](${playlist.url || playlist.source}) — ${playlist.songs.length} parca`,
+              ),
           ],
         })
         .catch(() => {});
     })
-    .on('error', (channel, error) => {
+    .on('error', (first, second) => {
+      const error = first instanceof Error ? first : second;
+      const queueOrChannel = first instanceof Error ? second : first;
       console.error('[distube]', error);
-      const text = channel?.send ? channel : null;
-      text
+      const channel = queueOrChannel?.textChannel || (queueOrChannel?.send ? queueOrChannel : null);
+      channel
         ?.send(`Muzik hatasi: ${error?.message?.slice(0, 300) || error}`)
         .catch(() => {});
     })
