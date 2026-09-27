@@ -14,12 +14,12 @@ module.exports = {
           .setDescription(
             [
               'Spotify sesini dogrudan akitmak yasal olarak mumkun degil.',
-              'Bot parca adini Spotify\'dan alir, sesi YouTube/SoundCloud uzerinden calar.',
+              "Bot parca adini Spotify'dan alir, sesi YouTube/SoundCloud uzerinden calar.",
               '',
               '**Muzik**',
-              `\`${p}play <sarki|link>\` / \`/play\`',
-              `\`${p}pause\` \`${p}resume\` \`${p}skip\` \`${p}stop\``,
-              `\`${p}queue\` \`${p}np\` \`${p}volume 80\` \`${p}shuffle\` \`${p}loop song\``,
+              '`' + p + 'play <sarki|link>` / `/play`',
+              '`' + p + 'pause` `' + p + 'resume` `' + p + 'skip` `' + p + 'stop`',
+              '`' + p + 'queue` `' + p + 'np` `' + p + 'volume 80` `' + p + 'shuffle` `' + p + 'loop song`',
               '',
               '**Spotify hesabin**',
               '`/spotify login` — hesabini bagla',
