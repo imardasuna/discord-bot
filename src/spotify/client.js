@@ -20,6 +20,8 @@ function authUrl(state) {
     'playlist-read-collaborative',
     'user-top-read',
     'user-read-recently-played',
+    'user-read-currently-playing',
+    'user-read-playback-state',
   ];
   return api.createAuthorizeURL(scopes, state, true);
 }
@@ -65,10 +67,19 @@ function trackQuery(track) {
   return `${track.name} ${artists}`;
 }
 
+function idFromUri(uri, kind) {
+  if (!uri) return null;
+  const prefix = `spotify:${kind}:`;
+  if (uri.startsWith(prefix)) return uri.slice(prefix.length);
+  const parts = uri.split(':');
+  return parts[parts.length - 1] || null;
+}
+
 module.exports = {
   createApi,
   authUrl,
   exchangeCode,
   apiForUser,
   trackQuery,
+  idFromUri,
 };
